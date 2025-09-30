@@ -21,8 +21,8 @@ WORKDIR /app
 # Create uploads directory
 RUN mkdir -p /app/wwwroot/uploads
 
-# Copy published files
-COPY --from=publish /app/publish .
+# Copy published files - force fresh copy
+COPY --from=publish /app/publish ./
 
 # Set environment to Production
 ENV ASPNETCORE_ENVIRONMENT=Production
