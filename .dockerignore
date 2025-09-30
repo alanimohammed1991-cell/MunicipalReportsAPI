@@ -1,0 +1,14 @@
+**/.vs
+**/.vscode
+**/bin
+**/obj
+**/.git
+**/.gitignore
+**/node_modules
+**/*.user
+**/*.suo
+**/wwwroot/uploads/*
+!**/.gitkeep
+README.md
+.env
+.env.*
