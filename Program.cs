@@ -58,6 +58,8 @@ var jwtSecretKey = builder.Configuration["Jwt:SecretKey"];
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
 var jwtAudience = builder.Configuration["Jwt:Audience"];
 
+Console.WriteLine($"[DEBUG] JWT Key from config: '{jwtSecretKey?.Substring(0, Math.Min(20, jwtSecretKey?.Length ?? 0))}...' (length: {jwtSecretKey?.Length})");
+
 if (!string.IsNullOrEmpty(jwtSecretKey) && !string.IsNullOrEmpty(jwtIssuer) && !string.IsNullOrEmpty(jwtAudience))
 {
     builder.Services.AddAuthentication(options =>
