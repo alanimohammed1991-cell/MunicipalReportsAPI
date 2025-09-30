@@ -28,7 +28,7 @@ if (connectionString.StartsWith("postgresql://") || connectionString.StartsWith(
 }
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString, o => o.UseNetTopologySuite()));
+    options.UseNpgsql(connectionString));
 
 // Add Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
