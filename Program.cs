@@ -156,6 +156,8 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+Console.WriteLine($"JWT Secret Key length: {jwtSecretKey?.Length ?? 0} characters");
+
 // Run database migrations automatically on startup (Production)
 if (app.Environment.IsProduction())
 {
