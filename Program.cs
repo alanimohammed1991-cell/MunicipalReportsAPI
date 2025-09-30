@@ -12,12 +12,20 @@ using Microsoft.AspNetCore.Http.Features;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add DbContext
+// Add DbContext - Convert Railway DATABASE_URL to Npgsql format
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found. Set ConnectionStrings__DefaultConnection environment variable.");
 
-Console.WriteLine($"[DEBUG] Connection string length: {connectionString.Length}");
-Console.WriteLine($"[DEBUG] Connection string starts with: {connectionString.Substring(0, Math.Min(15, connectionString.Length))}");
+Console.WriteLine($"[DEBUG] Raw connection string length: {connectionString.Length}");
+Console.WriteLine($"[DEBUG] Raw connection string: {connectionString}");
+
+// Convert postgresql:// URL format to Npgsql connection string format
+if (connectionString.StartsWith("postgresql://") || connectionString.StartsWith("postgres://"))
+{
+    var uri = new Uri(connectionString);
+    connectionString = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={uri.UserInfo.Split(':')[0]};Password={uri.UserInfo.Split(':')[1]}";
+    Console.WriteLine($"[DEBUG] Converted to Npgsql format, length: {connectionString.Length}");
+}
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString, o => o.UseNetTopologySuite()));
