@@ -165,10 +165,40 @@ if (app.Environment.IsProduction())
         try
         {
             var context = services.GetRequiredService<ApplicationDbContext>();
-            Console.WriteLine("Running database migrations...");
-            Console.WriteLine($"Pending migrations: {string.Join(", ", context.Database.GetPendingMigrations())}");
-            context.Database.Migrate();
-            Console.WriteLine("Database migrations completed successfully.");
+            Console.WriteLine("Checking database state...");
+
+            // Check if tables exist
+            var canConnect = context.Database.CanConnect();
+            Console.WriteLine($"Can connect to database: {canConnect}");
+
+            var pendingMigrations = context.Database.GetPendingMigrations().ToList();
+            var appliedMigrations = context.Database.GetAppliedMigrations().ToList();
+
+            Console.WriteLine($"Applied migrations: {string.Join(", ", appliedMigrations)}");
+            Console.WriteLine($"Pending migrations: {string.Join(", ", pendingMigrations)}");
+
+            // If no pending migrations but Categories table doesn't exist, delete migration history and reapply
+            if (!pendingMigrations.Any())
+            {
+                Console.WriteLine("No pending migrations, but checking if tables exist...");
+                try
+                {
+                    var exists = context.Categories.Any();
+                }
+                catch
+                {
+                    Console.WriteLine("Tables don't exist! Deleting database and recreating...");
+                    context.Database.EnsureDeleted();
+                    context.Database.Migrate();
+                    Console.WriteLine("Database recreated with migrations.");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Applying pending migrations...");
+                context.Database.Migrate();
+                Console.WriteLine("Database migrations completed successfully.");
+            }
 
             // Verify seeded data
             var categoryCount = context.Categories.Count();
