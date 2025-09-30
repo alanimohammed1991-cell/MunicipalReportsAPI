@@ -148,15 +148,30 @@ namespace MunicipalReportsAPI.Controllers
                     userName = r.User != null ? r.User.FullName ?? r.User.UserName : "Anonymous",
                     isAnonymous = r.UserId == null,
                     r.CreatedAt,
-                    hasImage = !string.IsNullOrEmpty(r.ReportImage),
-                    daysSinceCreated = EF.Functions.DateDiffDay(r.CreatedAt, DateTime.Now)
+                    hasImage = !string.IsNullOrEmpty(r.ReportImage)
                 })
                 .ToListAsync();
+
+            var result = recentReports.Select(r => new
+            {
+                r.Id,
+                r.Title,
+                r.Status,
+                r.Address,
+                r.categoryName,
+                r.categoryIcon,
+                r.categoryColor,
+                r.userName,
+                r.isAnonymous,
+                r.CreatedAt,
+                r.hasImage,
+                daysSinceCreated = (DateTime.Now - r.CreatedAt).Days
+            });
 
             return Ok(new
             {
                 success = true,
-                data = recentReports
+                data = result
             });
         }
 
@@ -185,16 +200,22 @@ namespace MunicipalReportsAPI.Controllers
                 .Where(r => r.ResolvedAt.HasValue)
                 .Select(r => new
                 {
-                    ResolutionDays = EF.Functions.DateDiffDay(r.CreatedAt, r.ResolvedAt.Value)
+                    r.CreatedAt,
+                    ResolvedAt = r.ResolvedAt.Value
                 })
                 .ToListAsync();
 
-            var averageResolutionDays = resolvedReports.Any()
-                ? Math.Round(resolvedReports.Average(r => r.ResolutionDays), 1)
+            var resolvedReportsWithDays = resolvedReports.Select(r => new
+            {
+                ResolutionDays = (r.ResolvedAt - r.CreatedAt).Days
+            }).ToList();
+
+            var averageResolutionDays = resolvedReportsWithDays.Any()
+                ? Math.Round(resolvedReportsWithDays.Average(r => r.ResolutionDays), 1)
                 : 0;
 
             // Reports resolved within 7 days
-            var quickResolutions = resolvedReports.Count(r => r.ResolutionDays <= 7);
+            var quickResolutions = resolvedReportsWithDays.Count(r => r.ResolutionDays <= 7);
 
             // Reports older than 30 days and still not resolved
             var thirtyDaysAgo = DateTime.Now.AddDays(-30);
@@ -210,10 +231,10 @@ namespace MunicipalReportsAPI.Controllers
                 {
                     averageResolutionDays,
                     totalReports,
-                    resolvedReports = resolvedReports.Count,
+                    resolvedReports = resolvedReportsWithDays.Count,
                     quickResolutions,
                     overdueReports,
-                    resolutionRate = totalReports > 0 ? Math.Round((double)resolvedReports.Count / totalReports * 100, 1) : 0
+                    resolutionRate = totalReports > 0 ? Math.Round((double)resolvedReportsWithDays.Count / totalReports * 100, 1) : 0
                 }
             });
         }

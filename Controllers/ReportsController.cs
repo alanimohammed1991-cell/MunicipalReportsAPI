@@ -263,7 +263,7 @@ namespace MunicipalReportsAPI.Controllers
             var totalCount = await query.CountAsync();
             var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
 
-            var reports = await query
+            var reportsData = await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Select(r => new
@@ -287,10 +287,34 @@ namespace MunicipalReportsAPI.Controllers
                     r.ResolvedAt,
                     r.ContactEmail,
                     r.ContactPhone,
-                    hasImage = !string.IsNullOrEmpty(r.ReportImage),
-                    daysSinceCreated = EF.Functions.DateDiffDay(r.CreatedAt, DateTime.Now)
+                    hasImage = !string.IsNullOrEmpty(r.ReportImage)
                 })
                 .ToListAsync();
+
+            var reports = reportsData.Select(r => new
+            {
+                r.Id,
+                r.Title,
+                r.Description,
+                r.Address,
+                r.ReportImage,
+                r.categoryId,
+                r.categoryName,
+                r.categoryIcon,
+                r.categoryColor,
+                r.userId,
+                r.userName,
+                r.isAnonymous,
+                r.Status,
+                r.AdminNotes,
+                r.CreatedAt,
+                r.UpdatedAt,
+                r.ResolvedAt,
+                r.ContactEmail,
+                r.ContactPhone,
+                r.hasImage,
+                daysSinceCreated = (DateTime.Now - r.CreatedAt).Days
+            }).ToList();
 
             return Ok(new
             {
