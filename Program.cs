@@ -143,6 +143,27 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Run database migrations automatically on startup (Production)
+if (app.Environment.IsProduction())
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
+        try
+        {
+            var context = services.GetRequiredService<ApplicationDbContext>();
+            Console.WriteLine("Running database migrations...");
+            context.Database.Migrate();
+            Console.WriteLine("Database migrations completed successfully.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred while migrating the database: {ex.Message}");
+            throw;
+        }
+    }
+}
+
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
