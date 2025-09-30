@@ -12,17 +12,12 @@ using Microsoft.AspNetCore.Http.Features;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add DbContext - Debug connection string
-var connString1 = builder.Configuration.GetConnectionString("DefaultConnection");
-var connString2 = builder.Configuration["DATABASE_URL"];
+// Add DbContext
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found. Set ConnectionStrings__DefaultConnection environment variable.");
 
-Console.WriteLine($"[DEBUG] GetConnectionString('DefaultConnection'): {(string.IsNullOrEmpty(connString1) ? "EMPTY/NULL" : $"{connString1.Substring(0, Math.Min(30, connString1.Length))}...")}");
-Console.WriteLine($"[DEBUG] DATABASE_URL: {(string.IsNullOrEmpty(connString2) ? "EMPTY/NULL" : $"{connString2.Substring(0, Math.Min(30, connString2.Length))}...")}");
-
-var connectionString = connString1 ?? connString2
-    ?? throw new InvalidOperationException("No database connection string found. Set either ConnectionStrings__DefaultConnection or DATABASE_URL");
-
-Console.WriteLine($"[DEBUG] Using connection string: {connectionString.Substring(0, Math.Min(30, connectionString.Length))}...");
+Console.WriteLine($"[DEBUG] Connection string length: {connectionString.Length}");
+Console.WriteLine($"[DEBUG] Connection string starts with: {connectionString.Substring(0, Math.Min(15, connectionString.Length))}");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString, o => o.UseNetTopologySuite()));
