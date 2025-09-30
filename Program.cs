@@ -171,33 +171,31 @@ if (app.Environment.IsProduction())
             var canConnect = context.Database.CanConnect();
             Console.WriteLine($"Can connect to database: {canConnect}");
 
-            var pendingMigrations = context.Database.GetPendingMigrations().ToList();
-            var appliedMigrations = context.Database.GetAppliedMigrations().ToList();
-
-            Console.WriteLine($"Applied migrations: {string.Join(", ", appliedMigrations)}");
-            Console.WriteLine($"Pending migrations: {string.Join(", ", pendingMigrations)}");
-
-            // If no pending migrations but Categories table doesn't exist, delete migration history and reapply
-            if (!pendingMigrations.Any())
+            // Check if Categories table exists
+            bool tablesExist = false;
+            try
             {
-                Console.WriteLine("No pending migrations, but checking if tables exist...");
-                try
-                {
-                    var exists = context.Categories.Any();
-                }
-                catch
-                {
-                    Console.WriteLine("Tables don't exist! Deleting database and recreating...");
-                    context.Database.EnsureDeleted();
-                    context.Database.Migrate();
-                    Console.WriteLine("Database recreated with migrations.");
-                }
+                tablesExist = context.Categories.Any() || !context.Categories.Any();
+                Console.WriteLine("Categories table exists.");
+            }
+            catch
+            {
+                Console.WriteLine("Categories table does NOT exist!");
+            }
+
+            if (!tablesExist)
+            {
+                Console.WriteLine("Creating database schema with EnsureCreated...");
+                // Drop everything and recreate
+                context.Database.EnsureDeleted();
+                var created = context.Database.EnsureCreated();
+                Console.WriteLine($"Database created: {created}");
             }
             else
             {
-                Console.WriteLine("Applying pending migrations...");
+                Console.WriteLine("Running migrations...");
                 context.Database.Migrate();
-                Console.WriteLine("Database migrations completed successfully.");
+                Console.WriteLine("Migrations completed.");
             }
 
             // Verify seeded data
@@ -206,7 +204,7 @@ if (app.Environment.IsProduction())
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"An error occurred while migrating the database: {ex.Message}");
+            Console.WriteLine($"An error occurred while setting up the database: {ex.Message}");
             Console.WriteLine($"Stack trace: {ex.StackTrace}");
             throw;
         }
