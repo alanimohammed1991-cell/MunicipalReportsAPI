@@ -178,16 +178,14 @@ if (app.Environment.IsProduction())
 }
 
 // Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Municipal Reports API V1");
-        c.RoutePrefix = string.Empty; // Makes Swagger available at the app's root
-    });
-}
-else
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Municipal Reports API V1");
+    c.RoutePrefix = string.Empty; // Makes Swagger available at the app's root
+});
+
+if (!app.Environment.IsDevelopment())
 {
     app.UseHsts();
 }
