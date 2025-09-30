@@ -305,8 +305,15 @@ namespace MunicipalReportsAPI.Controllers
                 });
             }
 
-            // Send welcome email
-            await _emailService.SendWelcomeEmailAsync(user);
+            // Send welcome email (don't block if email fails)
+            try
+            {
+                await _emailService.SendWelcomeEmailAsync(user);
+            }
+            catch (Exception emailEx)
+            {
+                Console.WriteLine($"Failed to send welcome email: {emailEx.Message}");
+            }
 
             return Ok(new { success = true, message = "Email confirmed successfully! Welcome to Municipal Reports System." });
         }
@@ -348,8 +355,16 @@ namespace MunicipalReportsAPI.Controllers
                     // Assign default role
                     await _userManager.AddToRoleAsync(user, "Citizen");
 
-                    // Send welcome email
-                    await _emailService.SendWelcomeEmailAsync(user);
+                    // Send welcome email (don't block login if email fails)
+                    try
+                    {
+                        await _emailService.SendWelcomeEmailAsync(user);
+                    }
+                    catch (Exception emailEx)
+                    {
+                        // Log but don't fail the login
+                        Console.WriteLine($"Failed to send welcome email: {emailEx.Message}");
+                    }
                 }
                 else
                 {
