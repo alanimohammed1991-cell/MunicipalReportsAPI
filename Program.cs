@@ -166,12 +166,18 @@ if (app.Environment.IsProduction())
         {
             var context = services.GetRequiredService<ApplicationDbContext>();
             Console.WriteLine("Running database migrations...");
+            Console.WriteLine($"Pending migrations: {string.Join(", ", context.Database.GetPendingMigrations())}");
             context.Database.Migrate();
             Console.WriteLine("Database migrations completed successfully.");
+
+            // Verify seeded data
+            var categoryCount = context.Categories.Count();
+            Console.WriteLine($"Categories in database: {categoryCount}");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"An error occurred while migrating the database: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
             throw;
         }
     }
