@@ -76,20 +76,18 @@ namespace MunicipalReportsAPI.Controllers
             // Assign default role
             await _userManager.AddToRoleAsync(user, "Citizen");
 
-            // Generate email confirmation token
+            // Auto-confirm email
             var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            var frontendBaseUrl = _configuration["FrontendSettings:BaseUrl"] ?? "http://localhost:3001";
-            var confirmationLink = $"{frontendBaseUrl}/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(emailToken)}";
+            await _userManager.ConfirmEmailAsync(user, emailToken);
 
-            // Send confirmation email
-            var emailSent = await _emailService.SendEmailConfirmationAsync(user, confirmationLink!);
+            // Generate JWT token
+            var token = await _jwtService.GenerateTokenAsync(user);
 
             return Ok(new
             {
                 success = true,
-                message = "Registration successful. Please check your email to confirm your account.",
-                requiresEmailConfirmation = true,
-                emailSent = emailSent,
+                message = "Registration successful. You can now login.",
+                token = token,
                 user = new
                 {
                     id = user.Id,
@@ -97,7 +95,7 @@ namespace MunicipalReportsAPI.Controllers
                     fullName = user.FullName,
                     phoneNumber = user.PhoneNumber,
                     createdAt = user.CreatedAt,
-                    emailConfirmed = user.EmailConfirmed
+                    emailConfirmed = true
                 }
             });
         }
@@ -109,11 +107,6 @@ namespace MunicipalReportsAPI.Controllers
             if (user == null)
             {
                 return Unauthorized(new { success = false, message = "Invalid email or password" });
-            }
-
-            if (!user.EmailConfirmed)
-            {
-                return Unauthorized(new { success = false, message = "Email not confirmed. Please check your email for the confirmation link." });
             }
 
             if (user.IsBlocked)
